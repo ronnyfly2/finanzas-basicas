@@ -1,0 +1,13 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom base styles if any */
+body {
+    background-color: #f1f5f9; /* slate-100 from original */
+    /* Consider moving fade/slide transitions here if they are global */
+}
+
+[v-cloak] {
+    display: none;
+}
