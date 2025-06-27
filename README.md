@@ -1,5 +1,8 @@
 # Dashboard de Gastos - Vue Tailwind
 
+
+![Dasboard](https://firebasestorage.googleapis.com/v0/b/tienda-fb8e3.appspot.com/o/Captura%20de%20pantalla%202025-06-26%20a%20las%2011.21.14%E2%80%AFp.%C2%A0m..png?alt=media&token=23fc9109-ec1d-49ff-a652-5f3a918da419)
+
 Este proyecto es una aplicación de dashboard para la gestión de gastos personales o familiares, construida con Vue.js 3, Pinia para la gestión de estado, Vue Router para la navegación, y Tailwind CSS para el diseño de la interfaz. Permite a los usuarios registrar transacciones (ingresos y gastos), categorizar gastos, asignar transacciones a miembros, visualizar resúmenes financieros y gráficos, y gestionar datos mediante importación/exportación.
 
 ## Tabla de Contenidos
