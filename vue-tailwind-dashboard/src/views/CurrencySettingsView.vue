@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="bg-white p-6 sm:p-8 rounded-xl shadow-lg border border-slate-200">
     <CurrencySettings />
   </div>
 </template>

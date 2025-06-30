@@ -1,9 +1,9 @@
 <template>
   <div class="p-4 space-y-6">
-    <h2 class="text-3xl font-bold text-slate-800">Configuración de Moneda</h2>
+    <h2 class="text-3xl font-bold text-slate-800 mb-6">Configuración de Moneda</h2>
 
     <!-- Formulario para Añadir/Editar Moneda -->
-    <div class="p-6 border rounded-xl shadow-lg bg-white">
+    <div class="p-6 bg-white border border-slate-200 rounded-xl shadow-lg">
       <h3 class="text-2xl font-semibold mb-4 text-slate-700">{{ isEditing ? 'Editar Moneda' : 'Añadir Nueva Moneda' }}</h3>
       <form @submit.prevent="handleCurrencySubmit" class="space-y-4">
         <div>
@@ -40,11 +40,23 @@
           </button>
         </div>
       </form>
+      <!-- Form Feedback Message -->
+      <div v-if="formMessage"
+           :class="['mt-4 p-3 rounded-md text-sm', formMessageType === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700']"
+           role="alert">
+        {{ formMessage }}
+      </div>
     </div>
 
     <!-- Lista de Monedas Activas -->
-    <div class="p-6 border rounded-xl shadow-lg bg-white">
+    <div class="p-6 bg-white border border-slate-200 rounded-xl shadow-lg">
       <h3 class="text-2xl font-semibold mb-4 text-slate-700">Monedas Activas</h3>
+      <!-- List Feedback Message -->
+      <div v-if="listMessage"
+           :class="['mb-4 p-3 rounded-md text-sm', listMessageType === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700']"
+           role="alert">
+        {{ listMessage }}
+      </div>
       <div v-if="activeCurrencies.length > 0" class="space-y-3">
         <div v-for="currency in activeCurrencies" :key="currency.code"
              class="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 border rounded-lg hover:shadow-md transition-shadow bg-gray-50">
@@ -86,7 +98,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, reactive, computed } from 'vue';
+import { ref, onMounted, reactive } from 'vue'; // computed was not used
 import {
   loadActiveCurrencies,
   addCurrency as storageAddCurrency,
@@ -112,6 +124,12 @@ const showConfirmDeleteModal = ref(false);
 const currencyToDeleteCode = ref('');
 const allowEditUSD = ref(false); // For future, if we want to allow editing USD name/symbol but not code/rate
 
+// Form and List messages
+const formMessage = ref('');
+const formMessageType = ref(''); // 'success' or 'error'
+const listMessage = ref('');
+const listMessageType = ref(''); // 'success' or 'error'
+
 const loadCurrencies = () => {
   activeCurrencies.value = loadActiveCurrencies();
   // If USD is not present, add it. This ensures base currency exists.
@@ -131,14 +149,21 @@ const resetForm = () => {
   currencyForm.symbol = '';
   currencyForm.exchangeRate = 1;
   currencyForm.originalCode = '';
+  formMessage.value = ''; // Clear form messages on reset
+  formMessageType.value = '';
 };
 
 const handleCurrencySubmit = () => {
+  formMessage.value = ''; // Clear previous messages
+  formMessageType.value = '';
+
   if (currencyForm.code === 'USD') {
     currencyForm.exchangeRate = 1.0; // Ensure USD rate is always 1
   }
   if (currencyForm.exchangeRate <= 0) {
-    alert("El tipo de cambio debe ser un número positivo.");
+    // alert("El tipo de cambio debe ser un número positivo.");
+    formMessage.value = "El tipo de cambio debe ser un número positivo.";
+    formMessageType.value = 'error';
     return;
   }
 
@@ -151,21 +176,13 @@ const handleCurrencySubmit = () => {
 
   let success = false;
   if (isEditing.value) {
-    // If only rate is being edited, use originalCode for lookup
-    // For full edit, currencyForm.code is the key (and should not have changed if it's the ID)
     const codeToUpdate = editingFullCurrency.value ? currencyForm.code : currencyForm.originalCode;
     success = storageUpdateCurrency({ ...currencyData, code: codeToUpdate });
-     if (!success && currencyData.code !== currencyForm.originalCode) {
-        // This implies an attempt to change the code, which our storageUpdate might not support directly if it relies on finding by old code.
-        // The current storageUpdateCurrency uses updatedCurrency.code as the key.
-        // If code can be changed, it's more complex: delete old, add new.
-        // For now, assume code is not changed or storageUpdateCurrency handles it by matching currencyForm.originalCode.
-        // The provided storageUpdateCurrency uses currency.code as the key.
-        // Let's assume we are updating based on currencyForm.code (which is disabled during edit, so it's the original code).
-    }
   } else {
     if (activeCurrencies.value.find(c => c.code === currencyData.code)) {
-      alert(`El código de moneda ${currencyData.code} ya existe.`);
+      // alert(`El código de moneda ${currencyData.code} ya existe.`);
+      formMessage.value = `El código de moneda ${currencyData.code} ya existe.`;
+      formMessageType.value = 'error';
       return;
     }
     success = storageAddCurrency(currencyData);
@@ -173,14 +190,36 @@ const handleCurrencySubmit = () => {
 
   if (success) {
     loadCurrencies();
-    resetForm();
+    if (!isEditing.value) { // Only reset form fully if adding new, not on successful edit
+        resetForm(); // Resets formMessage as well
+    }
+    formMessage.value = isEditing.value ? 'Moneda actualizada con éxito.' : 'Moneda añadida con éxito.';
+    formMessageType.value = 'success';
+    if(isEditing.value) { // If was editing, clear edit state
+        isEditing.value = false;
+        editingFullCurrency.value = false;
+        // Form fields will retain edited values until user starts new edit or adds new
+        // Or we can explicitly call resetForm() here too if preferred
+        // For now, let's clear them to avoid confusion
+        currencyForm.name = '';
+        currencyForm.code = '';
+        currencyForm.symbol = '';
+        currencyForm.exchangeRate = 1;
+        currencyForm.originalCode = '';
+    }
   } else {
-    // Error message might be shown by storage service or here
-    alert(isEditing.value ? "Error al actualizar la moneda." : "Error al añadir la moneda. El código podría ya existir.");
+    formMessage.value = isEditing.value ? "Error al actualizar la moneda." : "Error al añadir la moneda. El código podría ya existir o hubo otro problema.";
+    formMessageType.value = 'error';
   }
+  setTimeout(() => {
+    formMessage.value = '';
+    formMessageType.value = '';
+  }, 5000); // Increased timeout for better readability
 };
 
 const startEditCurrency = (currency, fullEdit = false) => {
+  formMessage.value = ''; // Clear any previous form messages when starting an edit
+  formMessageType.value = '';
   isEditing.value = true;
   editingFullCurrency.value = fullEdit;
   currencyForm.originalCode = currency.code; // Store original code for reference
@@ -210,11 +249,20 @@ const executeDeleteCurrency = () => {
   }
   showConfirmDeleteModal.value = false;
   currencyToDeleteCode.value = '';
+  listMessage.value = ''; // Clear message
+  listMessageType.value = '';
+
+  setTimeout(() => {
+    listMessage.value = '';
+    listMessageType.value = '';
+  }, 5000);
 };
 
 
 onMounted(() => {
   loadCurrencies();
+  // Initialize with USD if not present (already in loadCurrencies)
+  // This ensures that if localStorage is empty, USD is added and displayed.
 });
 
 </script>
