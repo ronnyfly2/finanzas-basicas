@@ -55,35 +55,15 @@ export const useMainStore = defineStore('main', () => {
   // For now, assuming CurrencySettings.vue handles its own persistence for these items.
   // We load them here primarily for other components to use.
 
-  // --- ACTIONS ---
-  const reloadCurrenciesAndRates = () => {
-    const loadedCurrencies = storage.loadActiveCurrencies() || [];
-    const loadedRates = storage.loadExchangeRates() || {};
-
-    activeCurrencies.value = loadedCurrencies;
-    exchangeRates.value = loadedRates;
-
-    // Validate selectedCurrencyCode against the newly loaded currencies
-    if (!loadedCurrencies.find(c => c.code === selectedCurrencyCode.value) && loadedCurrencies.length > 0) {
-      selectedCurrencyCode.value = loadedCurrencies[0].code; // Default to first available if current is invalid
-    } else if (loadedCurrencies.length === 0) {
-      // This case should ideally not happen if defaults are always present
-      console.warn("No active currencies loaded, cannot set a selected currency.");
-      // Potentially set selectedCurrencyCode.value to a fallback like 'USD' or 'PEN' that might be hardcoded as available soon
-    }
-  };
-
-
   // --- COMPUTED ---
-   const selectedCurrency = computed(() => {
+  const selectedCurrency = computed(() => {
     if (!activeCurrencies.value || activeCurrencies.value.length === 0) {
       // Return a placeholder or minimal default if no currencies are loaded
-      // This helps prevent errors in components trying to access properties of selectedCurrency.value
-      return { code: selectedCurrencyCode.value || 'PEN', symbol: '$', name: 'Loading...' , exchangeRate: 1};
+      return { code: selectedCurrencyCode.value || 'PEN', symbol: '$', name: 'Loading...', exchangeRate: 1 };
     }
     return activeCurrencies.value.find(c => c.code === selectedCurrencyCode.value) ||
-           activeCurrencies.value.find(c => c.code === 'PEN') || // Fallback to PEN
-           activeCurrencies.value[0]; // Fallback to the first available currency
+           activeCurrencies.value.find(c => c.code === 'PEN') ||
+           activeCurrencies.value[0];
   });
 
   const filteredTransactions = computed(() => {
@@ -146,6 +126,29 @@ export const useMainStore = defineStore('main', () => {
 
 
   // --- ACTIONS ---
+  // Currency Actions
+  const reloadCurrenciesAndRates = () => {
+    const loadedCurrencies = storage.loadActiveCurrencies() || [];
+    const loadedRates = storage.loadExchangeRates() || {};
+
+    activeCurrencies.value = loadedCurrencies;
+    exchangeRates.value = loadedRates;
+
+    if (!loadedCurrencies.find(c => c.code === selectedCurrencyCode.value) && loadedCurrencies.length > 0) {
+      selectedCurrencyCode.value = loadedCurrencies[0].code;
+    } else if (loadedCurrencies.length === 0) {
+      console.warn("No active currencies loaded, cannot set a selected currency.");
+    }
+  };
+
+  const setSelectedCurrencyCode = (newCode) => {
+    if (activeCurrencies.value.find(c => c.code === newCode)) {
+      selectedCurrencyCode.value = newCode;
+    } else {
+      console.warn(`Attempted to set invalid currency code: ${newCode}`);
+    }
+  };
+
   // Transaction Actions
   const openNewTransactionForm = () => {
     transactionForm.value = transactionFormInitialState();
@@ -305,13 +308,26 @@ export const useMainStore = defineStore('main', () => {
     transactions, members, categories, filterStartDate, filterEndDate,
     showTransactionForm, transactionForm, transactionFormInitialState,
     showConfirmModal, confirmModalProps,
+    // State
+    transactions, members, categories, filterStartDate, filterEndDate,
+    showTransactionForm, transactionForm, transactionFormInitialState,
+    showConfirmModal, confirmModalProps,
+    activeCurrencies, exchangeRates, selectedCurrencyCode,
+
+    // Computed
+    selectedCurrency,
     filteredTransactions, totalIncome, totalExpense, balance, expensesByCategory, expensesByMember, groupedTransactions,
+
+    // Actions
     openNewTransactionForm, openEditTransactionForm, saveTransaction, deleteTransaction, clearAllTransactions,
     addMember, updateMember, deleteMember,
     addCategory, updateCategory, deleteCategory, getCategoryColor,
     resetDateFilters,
     openConfirmModal, closeConfirmModal, executeConfirm,
-    exportData: storage.exportData, // Use directly from service
+    exportData: storage.exportData,
     handleFileUpload,
+    // Currency Actions
+    reloadCurrenciesAndRates,
+    setSelectedCurrencyCode,
   };
 });
