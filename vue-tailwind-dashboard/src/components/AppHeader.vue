@@ -36,6 +36,13 @@
         >
           Categorías
         </router-link>
+        <router-link
+          to="/currency-settings"
+          class="px-3 py-2 text-sm font-semibold rounded-md transition-colors"
+          :class="$route.name === 'CurrencySettings' ? 'bg-white shadow text-blue-700' : 'text-slate-600 hover:bg-slate-300'"
+        >
+          Monedas
+        </router-link>
       </nav>
     </div>
   </header>
