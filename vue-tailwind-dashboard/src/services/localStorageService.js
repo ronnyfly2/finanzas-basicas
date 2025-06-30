@@ -1,6 +1,18 @@
 const TRANSACTIONS_KEY = 'family-transactions';
 const MEMBERS_KEY = 'family-members';
 const CATEGORIES_KEY = 'family-categories';
+const ACTIVE_CURRENCIES_KEY = 'active-currencies';
+const EXCHANGE_RATES_KEY = 'exchange-rates';
+
+// Generic helper functions (private to this module)
+const loadData = (key, defaultValue = []) => {
+  const data = localStorage.getItem(key);
+  return data ? JSON.parse(data) : defaultValue;
+};
+
+const saveData = (key, data) => {
+  localStorage.setItem(key, JSON.stringify(data));
+};
 
 export const loadTransactions = () => {
   const data = localStorage.getItem(TRANSACTIONS_KEY);
@@ -53,6 +65,52 @@ export const exportData = () => {
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
 };
+
+// Currency Settings
+const defaultCurrencies = [
+  { code: 'PEN', name: 'Soles Peruanos', symbol: 'S/', exchangeRate: 3.75 },
+  { code: 'USD', name: 'Dólares Americanos', symbol: '$', exchangeRate: 1.00 },
+];
+
+const defaultExchangeRates = {
+  PEN: 3.75,
+  USD: 1.00,
+};
+
+/**
+ * Loads the list of active currencies from localStorage.
+ * If no data is found, returns a default list of currencies (PEN and USD).
+ * @returns {Array<Object>} An array of active currency objects, each with code, name, symbol, and exchangeRate.
+ */
+export const loadActiveCurrencies = () => {
+  return loadData(ACTIVE_CURRENCIES_KEY, defaultCurrencies);
+};
+
+/**
+ * Saves the list of active currencies to localStorage.
+ * @param {Array<Object>} currencies - The array of active currency objects to save.
+ */
+export const saveActiveCurrencies = (currencies) => {
+  saveData(ACTIVE_CURRENCIES_KEY, currencies);
+};
+
+/**
+ * Loads the exchange rates object from localStorage.
+ * If no data is found, returns a default set of exchange rates (PEN and USD against USD).
+ * @returns {Object.<string, number>} An object where keys are currency codes and values are their exchange rates relative to a base currency (e.g., USD).
+ */
+export const loadExchangeRates = () => {
+  return loadData(EXCHANGE_RATES_KEY, defaultExchangeRates);
+};
+
+/**
+ * Saves the exchange rates object to localStorage.
+ * @param {Object.<string, number>} rates - The exchange rates object to save.
+ */
+export const saveExchangeRates = (rates) => {
+  saveData(EXCHANGE_RATES_KEY, rates);
+};
+
 
 // handleFileUpload logic will likely be part of a component that uses this service or a store action
 // For now, the core load/save operations are here.

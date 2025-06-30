@@ -64,7 +64,7 @@
                 </span>
               </td>
               <td class="py-3 px-2 text-right font-mono" :class="t.type === 'income' ? 'text-green-600' : 'text-red-600'">
-                {{ t.type === 'income' ? '+' : '-' }} {{ fCurrency(t.amount, false) }}
+                {{ t.type === 'income' ? '+' : '-' }} {{ fCurrency(t.amount, true, t.currency) }}
               </td>
               <td class="py-3 px-2 text-center">
                 <div class="flex justify-center items-center gap-3">

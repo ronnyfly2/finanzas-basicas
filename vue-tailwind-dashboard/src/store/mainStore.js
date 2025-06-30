@@ -16,7 +16,7 @@ export const useMainStore = defineStore('main', () => {
   const showTransactionForm = ref(false);
   const transactionFormInitialState = () => ({
     id: null, description: '', amount: null, type: 'expense', category: '', member: '',
-    date: new Date().toISOString().slice(0, 10), detail: '', isEditing: false,
+    date: new Date().toISOString().slice(0, 10), detail: '', isEditing: false, currency: 'PEN', // Default currency
   });
   const transactionForm = ref(transactionFormInitialState());
 
