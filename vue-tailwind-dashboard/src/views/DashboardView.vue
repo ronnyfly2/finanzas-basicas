@@ -2,10 +2,12 @@
   <div class="space-y-8">
     <DateFilter v-if="!store.showTransactionForm" /> <!-- Hide filter when form is shown, or handle layout differently -->
 
-    <section class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-      <StatsCard
-        title="Ingresos Totales"
-        :value="store.totalIncome"
+    <!-- Only render sections requiring currency data once store indicates readiness -->
+    <template v-if="store.activeCurrencies && store.activeCurrencies.length > 0 && store.exchangeRates && Object.keys(store.exchangeRates).length > 0">
+      <section class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <StatsCard
+          title="Ingresos Totales"
+          :value="store.totalIncome"
         valueCurrencyCode="PEN" <!-- Assuming store totals are effectively PEN -->
         icon="fa-solid fa-arrow-up"
         icon-bg-color="bg-green-100"
