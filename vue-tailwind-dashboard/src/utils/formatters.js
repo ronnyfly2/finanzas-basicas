@@ -12,23 +12,33 @@
 export const formatCurrency = (originalAmount, transactionCurrencyCode, targetDisplayCurrencyCode, activeCurrencies, exchangeRates) => {
   let amountToDisplay = Number(originalAmount) || 0;
 
-  const targetCurrencyDetails = activeCurrencies.find(c => c.code === targetDisplayCurrencyCode) ||
-                                activeCurrencies.find(c => c.code === 'USD') || // Fallback
-                                activeCurrencies[0]; // Ultimate fallback
-
-  if (!targetCurrencyDetails) {
-    // Should not happen if activeCurrencies is always populated
-    return `${amountToDisplay.toFixed(2)} ${targetDisplayCurrencyCode || ''}`;
+  // Ensure activeCurrencies and exchangeRates are valid and usable
+  if (!activeCurrencies || activeCurrencies.length === 0 || !exchangeRates || Object.keys(exchangeRates).length === 0) {
+    console.warn('formatCurrency: activeCurrencies or exchangeRates are not available. Displaying raw amount.');
+    // Fallback: display original amount with its code, or just the number if code is unknown
+    return `${transactionCurrencyCode || ''} ${amountToDisplay.toFixed(2)}`;
   }
 
-  // Perform conversion if the transaction currency is different from the target display currency
-  if (transactionCurrencyCode !== targetDisplayCurrencyCode) {
-    const transactionRateVsUSD = exchangeRates[transactionCurrencyCode];
-    const targetRateVsUSD = exchangeRates[targetDisplayCurrencyCode];
+  const targetCurrencyDetails = activeCurrencies.find(c => c.code === targetDisplayCurrencyCode) ||
+                                activeCurrencies.find(c => c.code === 'USD') ||
+                                activeCurrencies[0];
 
-    if (typeof transactionRateVsUSD !== 'number' || typeof targetRateVsUSD !== 'number') {
-      console.warn(`Exchange rate missing for conversion: ${transactionCurrencyCode} -> ${targetDisplayCurrencyCode}`);
-      // Display original amount with its own currency code if conversion is not possible
+  if (!targetCurrencyDetails) {
+    console.warn(`formatCurrency: Target currency details not found for ${targetDisplayCurrencyCode}. Displaying raw amount.`);
+    return `${targetDisplayCurrencyCode || ''} ${amountToDisplay.toFixed(2)}`;
+  }
+
+  const effectiveTargetDisplayCurrencyCode = targetCurrencyDetails.code;
+
+  // Perform conversion if the transaction currency is different from the target display currency
+  if (transactionCurrencyCode !== effectiveTargetDisplayCurrencyCode) {
+    const transactionRateVsUSD = exchangeRates[transactionCurrencyCode];
+    const targetRateVsUSD = exchangeRates[effectiveTargetDisplayCurrencyCode];
+
+    if (typeof transactionRateVsUSD !== 'number' || transactionRateVsUSD <= 0 ||
+        typeof targetRateVsUSD !== 'number' || targetRateVsUSD <= 0) {
+      console.warn(`Exchange rate missing or invalid for conversion: ${transactionCurrencyCode} (rate: ${transactionRateVsUSD}) -> ${effectiveTargetDisplayCurrencyCode} (rate: ${targetRateVsUSD})`);
+
       const originalCurrencyDetails = activeCurrencies.find(c => c.code === transactionCurrencyCode);
       try {
         return new Intl.NumberFormat(undefined, {
