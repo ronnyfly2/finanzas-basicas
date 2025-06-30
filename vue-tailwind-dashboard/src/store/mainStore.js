@@ -7,9 +7,10 @@ export const useMainStore = defineStore('main', () => {
   const transactions = ref(storage.loadTransactions());
   const members = ref(storage.loadMembers());
   const categories = ref(storage.loadCategories());
-  const activeCurrencies = ref(storage.loadActiveCurrencies()); // Load all available currencies
-  const exchangeRates = ref(storage.loadExchangeRates()); // Load exchange rates
-  const selectedCurrencyCode = ref(storage.loadSelectedCurrencyCode()); // Load user's preferred currency
+  // Initialize with empty array/object to prevent undefined errors on initial access
+  const activeCurrencies = ref(storage.loadActiveCurrencies() || []);
+  const exchangeRates = ref(storage.loadExchangeRates() || {});
+  const selectedCurrencyCode = ref(storage.loadSelectedCurrencyCode() || 'PEN'); // Default to PEN if load returns null/undefined
 
   const filterStartDate = ref('');
   const filterEndDate = ref('');
