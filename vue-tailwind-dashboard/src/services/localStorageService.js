@@ -111,6 +111,86 @@ export const saveExchangeRates = (rates) => {
   saveData(EXCHANGE_RATES_KEY, rates);
 };
 
+// --- Currency CRUD ---
+export const addCurrency = (currency) => {
+  const currencies = loadActiveCurrencies();
+  const rates = loadExchangeRates();
+
+  if (currencies.find(c => c.code === currency.code)) {
+    // Handle error: currency code already exists
+    console.error("Error: Currency code already exists.");
+    return false;
+  }
+  currencies.push(currency);
+  rates[currency.code] = currency.exchangeRate;
+
+  saveActiveCurrencies(currencies);
+  saveExchangeRates(rates);
+  return true;
+};
+
+export const updateCurrency = (updatedCurrency) => {
+  const currencies = loadActiveCurrencies();
+  const rates = loadExchangeRates();
+
+  const index = currencies.findIndex(c => c.code === updatedCurrency.code);
+  if (index === -1) {
+    // Handle error: currency not found
+    console.error("Error: Currency not found for update.");
+    return false;
+  }
+  currencies[index] = updatedCurrency;
+  rates[updatedCurrency.code] = updatedCurrency.exchangeRate;
+
+  saveActiveCurrencies(currencies);
+  saveExchangeRates(rates);
+  return true;
+};
+
+export const deleteCurrency = (currencyCode) => {
+  let currencies = loadActiveCurrencies();
+  const rates = loadExchangeRates();
+  const transactions = loadTransactions(); // Check if currency is in use
+
+  // Basic check: Cannot delete USD (base currency for rates) or if it's the only currency
+  if (currencyCode === 'USD') {
+    alert("Cannot delete the base currency (USD).");
+    return false;
+  }
+  if (currencies.length <= 1) {
+    alert("Cannot delete the only available currency.");
+    return false;
+  }
+
+  // Check if the currency is used in any transaction
+  if (transactions.some(t => t.currency === currencyCode)) {
+    alert(`Cannot delete currency ${currencyCode} as it is used in existing transactions.`);
+    return false;
+  }
+
+  currencies = currencies.filter(c => c.code !== currencyCode);
+  delete rates[currencyCode];
+
+  saveActiveCurrencies(currencies);
+  saveExchangeRates(rates);
+  return true;
+};
+
+// --- Selected Currency Preference ---
+const SELECTED_CURRENCY_KEY = 'selected-currency-code';
+
+export const loadSelectedCurrencyCode = () => {
+  const code = localStorage.getItem(SELECTED_CURRENCY_KEY);
+  // Return 'PEN' if nothing is stored, or if stored value is not in active currencies.
+  // However, a more robust check against activeCurrencies might be better done in the store
+  // after loading both activeCurrencies and this preference.
+  return code ? JSON.parse(code) : 'PEN'; // Default to PEN
+};
+
+export const saveSelectedCurrencyCode = (currencyCode) => {
+  localStorage.setItem(SELECTED_CURRENCY_KEY, JSON.stringify(currencyCode));
+};
+
 
 // handleFileUpload logic will likely be part of a component that uses this service or a store action
 // For now, the core load/save operations are here.

@@ -76,34 +76,15 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted, computed } from 'vue';
+import { ref, watch, computed } from 'vue'; // Removed onMounted and loadActiveCurrencies import
 import { useMainStore } from '../store/mainStore';
-import { loadActiveCurrencies } from '@/services/localStorageService'; // Corregido
+// import { loadActiveCurrencies } from '@/services/localStorageService'; // No longer needed here
 
 const store = useMainStore();
 
-const activeCurrencies = ref([]);
+// activeCurrencies are now sourced directly from the store
+const activeCurrencies = computed(() => store.activeCurrencies);
 
-onMounted(() => {
-  // Cargar monedas activas usando la función específica
-  activeCurrencies.value = loadActiveCurrencies();
-
-  // Asegurar que el formData tenga una moneda por defecto si no la tiene
-  // y si hay monedas activas disponibles.
-  if (!formData.value.currency && activeCurrencies.value && activeCurrencies.value.length > 0) {
-    // Intentar preseleccionar PEN, o la primera disponible de las cargadas
-    const defaultCurrency = activeCurrencies.value.find(c => c.code === 'PEN') || activeCurrencies.value[0];
-    if (defaultCurrency) {
-      formData.value.currency = defaultCurrency.code;
-    }
-  } else if (!formData.value.currency) {
-    // Si no hay monedas en localStorage Y formData no tiene moneda,
-    // podríamos asignar un valor por defecto absoluto aquí, aunque es mejor
-    // que loadActiveCurrencies siempre devuelva un array (incluso con defaults).
-    // Por ahora, TransactionForm dependerá de que loadActiveCurrencies proporcione defaults.
-    console.warn("No hay monedas activas cargadas y formData no tiene moneda preseleccionada.");
-  }
-});
 
 // Use a local ref for form data, synced with the store's transactionForm
 // This allows local modifications without directly mutating store state outside actions/mutations,
