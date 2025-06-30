@@ -7,6 +7,9 @@ export const useMainStore = defineStore('main', () => {
   const transactions = ref(storage.loadTransactions());
   const members = ref(storage.loadMembers());
   const categories = ref(storage.loadCategories());
+  const activeCurrencies = ref(storage.loadActiveCurrencies()); // Load all available currencies
+  const exchangeRates = ref(storage.loadExchangeRates()); // Load exchange rates
+  const selectedCurrencyCode = ref(storage.loadSelectedCurrencyCode()); // Load user's preferred currency
 
   const filterStartDate = ref('');
   const filterEndDate = ref('');
@@ -16,7 +19,7 @@ export const useMainStore = defineStore('main', () => {
   const showTransactionForm = ref(false);
   const transactionFormInitialState = () => ({
     id: null, description: '', amount: null, type: 'expense', category: '', member: '',
-    date: new Date().toISOString().slice(0, 10), detail: '', isEditing: false, currency: 'PEN', // Default currency
+    date: new Date().toISOString().slice(0, 10), detail: '', isEditing: false, currency: selectedCurrencyCode.value || 'PEN', // Default to selected or PEN
   });
   const transactionForm = ref(transactionFormInitialState());
 
@@ -36,7 +39,28 @@ export const useMainStore = defineStore('main', () => {
     storage.saveCategories(newCategories);
   }, { deep: true });
 
+  watch(selectedCurrencyCode, (newCode) => {
+    storage.saveSelectedCurrencyCode(newCode);
+    // When selected currency changes, update default currency for new transactions
+    if (!transactionForm.value.isEditing) {
+        transactionForm.value.currency = newCode;
+    }
+  });
+
+  // Watch for changes in activeCurrencies or exchangeRates from CurrencySettingsView and persist them
+  // Note: CurrencySettings.vue already saves these directly via localStorageService.
+  // If we want mainStore to be the single source of truth that then calls storage service,
+  // then CurrencySettings.vue should emit events or call store actions.
+  // For now, assuming CurrencySettings.vue handles its own persistence for these items.
+  // We load them here primarily for other components to use.
+
   // --- COMPUTED ---
+   const selectedCurrency = computed(() => {
+    return activeCurrencies.value.find(c => c.code === selectedCurrencyCode.value) ||
+           activeCurrencies.value.find(c => c.code === 'PEN') || // Fallback to PEN
+           activeCurrencies.value[0]; // Fallback to the first available currency
+  });
+
   const filteredTransactions = computed(() => {
     return transactions.value.filter(t => {
       const transactionDate = new Date(t.date);

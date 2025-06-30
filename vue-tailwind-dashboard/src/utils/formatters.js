@@ -1,12 +1,69 @@
-export const formatCurrency = (value, includeSymbol = true, currency = 'PEN', locale = 'es-PE') => {
-  const amount = Number(value) || 0;
-  const options = { style: 'currency', currency: currency, minimumFractionDigits: 2, maximumFractionDigits: 2 };
-  if (!includeSymbol) {
-    delete options.style;
-    delete options.currency;
+/**
+ * Formats a numerical amount into a currency string, converting it to the target display currency.
+ *
+ * @param {number} originalAmount - The amount in its original transaction currency.
+ * @param {string} transactionCurrencyCode - The currency code of the original transaction (e.g., 'USD', 'PEN').
+ * @param {string} targetDisplayCurrencyCode - The currency code to display the amount in (e.g., store.selectedCurrencyCode).
+ * @param {Array<Object>} activeCurrencies - Array of available currency objects from mainStore.
+ *                                          Each object: { code, symbol, name, exchangeRate (vs USD) }.
+ * @param {Object} exchangeRates - Object from mainStore with currency codes as keys and their rates against USD.
+ * @returns {string} The formatted currency string (e.g., "$1,234.56", "S/ 500.00").
+ */
+export const formatCurrency = (originalAmount, transactionCurrencyCode, targetDisplayCurrencyCode, activeCurrencies, exchangeRates) => {
+  let amountToDisplay = Number(originalAmount) || 0;
+
+  const targetCurrencyDetails = activeCurrencies.find(c => c.code === targetDisplayCurrencyCode) ||
+                                activeCurrencies.find(c => c.code === 'USD') || // Fallback
+                                activeCurrencies[0]; // Ultimate fallback
+
+  if (!targetCurrencyDetails) {
+    // Should not happen if activeCurrencies is always populated
+    return `${amountToDisplay.toFixed(2)} ${targetDisplayCurrencyCode || ''}`;
   }
-  return new Intl.NumberFormat(locale, options).format(amount);
+
+  // Perform conversion if the transaction currency is different from the target display currency
+  if (transactionCurrencyCode !== targetDisplayCurrencyCode) {
+    const transactionRateVsUSD = exchangeRates[transactionCurrencyCode];
+    const targetRateVsUSD = exchangeRates[targetDisplayCurrencyCode];
+
+    if (typeof transactionRateVsUSD !== 'number' || typeof targetRateVsUSD !== 'number') {
+      console.warn(`Exchange rate missing for conversion: ${transactionCurrencyCode} -> ${targetDisplayCurrencyCode}`);
+      // Display original amount with its own currency code if conversion is not possible
+      const originalCurrencyDetails = activeCurrencies.find(c => c.code === transactionCurrencyCode);
+      try {
+        return new Intl.NumberFormat(undefined, {
+          style: 'currency',
+          currency: transactionCurrencyCode,
+          currencyDisplay: 'symbol'
+        }).format(amountToDisplay);
+      } catch (e) {
+        return `${originalCurrencyDetails?.symbol || transactionCurrencyCode} ${amountToDisplay.toFixed(2)}`;
+      }
+    }
+
+    // Convert originalAmount to USD first, then from USD to target currency
+    const amountInUSD = originalAmount / transactionRateVsUSD;
+    amountToDisplay = amountInUSD * targetRateVsUSD;
+  }
+
+  try {
+    // Use Intl.NumberFormat for locale-specific formatting.
+    // The 'currency' option should be the targetDisplayCurrencyCode for correct symbol and formatting.
+    return new Intl.NumberFormat(undefined, { // Uses browser's default locale
+      style: 'currency',
+      currency: targetDisplayCurrencyCode, // Ensures correct currency symbol and formatting for the target currency
+      currencyDisplay: 'symbol', // Prefer symbol (e.g., $) over code (e.g., USD)
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(amountToDisplay);
+  } catch (error) {
+    // Fallback for environments where Intl or specific currency code might not be supported
+    // console.warn(`Error formatting currency ${targetDisplayCurrencyCode} with Intl:`, error);
+    // Use the symbol from our activeCurrencies data as a fallback.
+    return `${targetCurrencyDetails.symbol || targetDisplayCurrencyCode} ${amountToDisplay.toFixed(2)}`;
+  }
 };
+
 
 export const formatDateHeader = (dateString) => {
   const today = new Date();

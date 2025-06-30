@@ -64,7 +64,7 @@
                 </span>
               </td>
               <td class="py-3 px-2 text-right font-mono" :class="t.type === 'income' ? 'text-green-600' : 'text-red-600'">
-                {{ t.type === 'income' ? '+' : '-' }} {{ fCurrency(t.amount, true, t.currency) }}
+                {{ t.type === 'income' ? '+' : '-' }} {{ formatTransactionAmount(t) }}
               </td>
               <td class="py-3 px-2 text-center">
                 <div class="flex justify-center items-center gap-3">
@@ -86,9 +86,20 @@
 
 <script setup>
 import { useMainStore } from '../store/mainStore';
-import { formatCurrency as fCurrency, formatDateHeader as fDateHeader, getCategoryStyle } from '../utils/formatters';
+import { formatCurrency, formatDateHeader as fDateHeader, getCategoryStyle } from '../utils/formatters';
 
 const store = useMainStore();
+
+const formatTransactionAmount = (transaction) => {
+  // Use the globally imported formatCurrency
+  return formatCurrency(
+    transaction.amount,
+    transaction.currency, // The currency the transaction was made in
+    store.selectedCurrencyCode, // The currency to display it in
+    store.activeCurrencies,
+    store.exchangeRates
+  );
+};
 
 const edit = (transaction) => store.openEditTransactionForm(transaction);
 
