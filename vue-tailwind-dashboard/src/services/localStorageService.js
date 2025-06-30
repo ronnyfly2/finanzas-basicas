@@ -77,18 +77,36 @@ const defaultExchangeRates = {
   USD: 1.00,
 };
 
+/**
+ * Loads the list of active currencies from localStorage.
+ * If no data is found, returns a default list of currencies (PEN and USD).
+ * @returns {Array<Object>} An array of active currency objects, each with code, name, symbol, and exchangeRate.
+ */
 export const loadActiveCurrencies = () => {
   return loadData(ACTIVE_CURRENCIES_KEY, defaultCurrencies);
 };
 
+/**
+ * Saves the list of active currencies to localStorage.
+ * @param {Array<Object>} currencies - The array of active currency objects to save.
+ */
 export const saveActiveCurrencies = (currencies) => {
   saveData(ACTIVE_CURRENCIES_KEY, currencies);
 };
 
+/**
+ * Loads the exchange rates object from localStorage.
+ * If no data is found, returns a default set of exchange rates (PEN and USD against USD).
+ * @returns {Object.<string, number>} An object where keys are currency codes and values are their exchange rates relative to a base currency (e.g., USD).
+ */
 export const loadExchangeRates = () => {
   return loadData(EXCHANGE_RATES_KEY, defaultExchangeRates);
 };
 
+/**
+ * Saves the exchange rates object to localStorage.
+ * @param {Object.<string, number>} rates - The exchange rates object to save.
+ */
 export const saveExchangeRates = (rates) => {
   saveData(EXCHANGE_RATES_KEY, rates);
 };
