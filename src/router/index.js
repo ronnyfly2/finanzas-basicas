@@ -1,35 +1,30 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import DashboardView from '../views/DashboardView.vue';
-import ChartsView from '../views/ChartsView.vue';
-import MembersView from '../views/MembersView.vue';
-import CategoriesView from '../views/CategoriesView.vue';
-import CurrencySettingsView from '../views/CurrencySettingsView.vue'; // Importar la nueva vista
 
 const routes = [
   {
     path: '/',
     name: 'Dashboard',
-    component: DashboardView,
+    component: () => import('../views/DashboardView.vue'),
   },
   {
     path: '/charts',
     name: 'Charts',
-    component: ChartsView,
+    component: () => import('../views/ChartsView.vue'),
   },
   {
     path: '/members',
     name: 'Members',
-    component: MembersView,
+    component: () => import('../views/MembersView.vue'),
   },
   {
     path: '/categories',
     name: 'Categories',
-    component: CategoriesView,
+    component: () => import('../views/CategoriesView.vue'),
   },
   {
     path: '/currency-settings',
     name: 'CurrencySettings',
-    component: CurrencySettingsView,
+    component: () => import('../views/CurrencySettingsView.vue'),
   },
   // Redirect to Dashboard for any unknown paths
   {
