@@ -34,7 +34,20 @@ const routes = [
   // Redirect to Dashboard for any unknown paths
   {
     path: '/:catchAll(.*)',
-    redirect: '/',
+    redirect: '/404', // Redirige a la página de error 404 personalizada
+  },
+  {
+    path: '/error/:errorCode',
+    name: 'Error',
+    component: () => import('../views/ErrorView.vue'),
+    props: true,
+  },
+  // Specific route for 404 to ensure it's handled by ErrorView
+  {
+    path: '/404',
+    name: 'NotFound',
+    component: () => import('../views/ErrorView.vue'),
+    props: { errorCode: '404' }
   }
 ];
 
